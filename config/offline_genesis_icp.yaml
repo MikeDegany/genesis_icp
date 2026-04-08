@@ -1,0 +1,58 @@
+# Copyright (c) 2026 Mike Degany <mike.degany@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Offline replay: bag paths and launch options for offline_genesis_icp.launch.py
+#
+# Edit robot_a_bag / robot_b_bag to absolute paths (or paths relative to this file's directory).
+# Copy this file elsewhere if you prefer; pass it in with:
+#   ros2 launch genesis_icp offline_genesis_icp.launch.py offline_config:=/path/to/your.yaml
+
+offline_genesis_icp:
+  # Required: rosbag2 directories or .db3 files (one bag per robot domain).
+  robot_a_bag: "/home/UNT/md0708/BagFiles/multirobot_bags/313131-JK3/JK3-31Mar1m20d"
+  robot_b_bag: "/home/UNT/md0708/BagFiles/multirobot_bags/313131/JK5-31Mar1m20d"
+
+  # Optional: override fusion parameter file (null = package share config/genesis_icp.yaml).
+  fusion_params_file: null
+
+  # Merged into the genesis_icp node (flat ros__parameters-style keys for that node).
+  extra_fusion_parameters:
+    use_odom_poses_for_match: true
+    multi_seed_match: false
+
+  use_sim_time: true
+  robot_a_ros_domain_id: 3
+  robot_b_ros_domain_id: 5
+  fusion_ros_domain_id: 0
+  robot_a_namespace: JK3
+  robot_b_namespace: JK5
+
+  scan_use_best_effort_qos: false
+  tf_static_use_transient_local: false
+  max_time_delta_sec: 10.0
+
+  bag_play:
+    clock: true
+    rate: 1.0
+    loop: false
+    # Seconds; forwarded to ros2 bag play when supported.
+    start_offset: 0.0
+    # Extra CLI tokens, e.g. ["--read-ahead-queue-size", "1000"]
+    additional_args: []
