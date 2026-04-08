@@ -69,13 +69,22 @@ target_include_directories(genesis_icp_common PUBLIC
 ament_target_dependencies(genesis_icp_common ${DEPS})
 target_link_libraries(genesis_icp_common karto_genesis_icp ${Boost_LIBRARIES} TBB::tbb)
 
+add_library(genesis_icp_scan_fusion STATIC src/scan_fusion_core.cpp)
+target_include_directories(genesis_icp_scan_fusion PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+  ${EIGEN3_INCLUDE_DIRS}
+)
+ament_target_dependencies(genesis_icp_scan_fusion ${DEPS})
+target_link_libraries(genesis_icp_scan_fusion genesis_icp_common)
+
 add_executable(genesis_icp_socket_relay src/socket_relay_main.cpp)
 ament_target_dependencies(genesis_icp_socket_relay ${DEPS})
 target_link_libraries(genesis_icp_socket_relay genesis_icp_common)
 
 add_executable(genesis_icp_node src/genesis_icp_node.cpp)
 ament_target_dependencies(genesis_icp_node ${DEPS})
-target_link_libraries(genesis_icp_node genesis_icp_common)
+target_link_libraries(genesis_icp_node genesis_icp_scan_fusion genesis_icp_common)
 
 install(TARGETS genesis_icp_socket_relay genesis_icp_node
   DESTINATION lib/${PROJECT_NAME}
