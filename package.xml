@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<!--
+  Copyright (c) 2026 Mike Degany <mike.degany@gmail.com>
+  MIT License: see permission/disclaimer text in MIT-licensed source files in this package.
+
+  This package also contains third-party code under other licenses:
+  - lib/karto_sdk: see lib/karto_sdk/LICENSE and Authors
+  - src/laser_utils.cpp, include/genesis_icp/laser_utils.hpp: Creative Commons (Samsung Research America)
+  - src/mapper_configure.cpp: derived from slam_toolbox; copyright as in that project
+-->
+<package format="3">
+  <name>genesis_icp</name>
+  <version>0.1.0</version>
+  <description>Cross-domain laser relay, Karto correlative scan matching, and global_odom static TF for multi-robot setups.</description>
+  <maintainer email="mike.degany@gmail.com">Mike Degany</maintainer>
+  <license>MIT</license>
+  <license>LGPL-3.0-only</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf2_msgs</depend>
+
+  <build_depend>eigen</build_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>tbb</build_depend>
+
+  <exec_depend>eigen</exec_depend>
+  <exec_depend>boost</exec_depend>
+  <exec_depend>tbb</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
