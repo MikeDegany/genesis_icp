@@ -2,7 +2,7 @@
 
 # genesis_icp
 
-**Cross-domain LiDAR fusion for two robots** — TCP relays across ROS 2 domains, **Karto** correlative scan matching, and a published **`global_odom`** static transform tree.
+ROS2 **MultiRobot Relative Pose Estimator** with Cross-domain LiDAR TCP relays and Karto correlative scan matching
 
 [![ROS 2](https://img.shields.io/badge/ROS%202-Humble%20%7C%20Jazzy-22314E?style=flat&logo=ros)](https://docs.ros.org/)
 [![License](https://img.shields.io/badge/license-Mixed-blue.svg)](#license)
@@ -13,13 +13,13 @@
 
 ## Overview
 
-Many multi-robot stacks run each robot in its own **`ROS_DOMAIN_ID`** so topics do not collide. **genesis_icp** bridges that gap:
+Multi-robot SLAM stacks often require know poses for robots. In a real-world Multi-robot setup, each robot runs in its own **`ROS_DOMAIN_ID`** so topics do not collide and traffic is isolated. **genesis_icp** bridges that gap:
 
 1. **Socket relays** on each robot subscribe to local scans + TF, serialize a compact wire packet, and stream it to a central **fusion** process.
-2. The **fusion node** runs **Karto**’s sequential scan matcher to estimate the **relative pose** between the two laser frames.
-3. It publishes **static `tf2` messages** so both robots can agree on a common **`global_odom`** frame (configurable anchor: robot A, robot B, or midpoint).
+2. The **fusion node** runs **Karto**’s sequential scan matcher to estimate the **relative pose** between the laser frames.
+3. It publishes **static `tf2` messages** so robots can agree on a common **`global_odom`** frame (configurable anchor: robot A, or midpoint).
 
-Optional **odom-free matching** ignores wheel odometry in packets when each robot reports ~(0,0,0) but the physical layout varies; **multi-seed** search explores a coarse grid of pose hypotheses to reduce sensitivity to a single bad initial guess.
+**odom-free matching** ignores wheel odometry in packets when each robot reports ~(0,0,0) but the physical layout varies; **multi-seed** search explores a coarse grid of pose hypotheses to reduce sensitivity to a single bad initial guess.
 
 ---
 
