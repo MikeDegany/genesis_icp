@@ -1,0 +1,81 @@
+# -----------------------------------------------------------------------------
+# genesis_icp — keep the repo free of build artifacts, IDE noise, secrets,
+# machine-specific paths, and local overrides.
+# -----------------------------------------------------------------------------
+
+# --- colcon / ROS 2 workspace (if repo is cloned inside a ws or built in-tree)
+build/
+install/
+log/
+.ros/
+
+# --- CMake / C++
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.a
+*.o
+*.so
+*.dylib
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# --- Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Editors & OS
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# --- Environment & secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
+
+# --- Local overrides (paths, usernames, private bags)
+*.local.yaml
+*.local.yml
+*.local.sh
+**/local/
+offline_private.yaml
+
+# --- Rosbag / large data (usually not part of the package source)
+*.db3
+*.mcap
+bags/
+bag_files/
+*.bag
+
+# --- Logs & dumps
+*.log
+*.log.*
+core
+core.*
+
+# --- Optional: coverage / profiling
+coverage/
+*.gcov
+*.gcda
+*.gcno
+.cache/
