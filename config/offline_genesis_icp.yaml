@@ -18,41 +18,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-# Offline replay: bag paths and launch options for offline_genesis_icp.launch.py
-#
-# Edit robot_a_bag / robot_b_bag to absolute paths (or paths relative to this file's directory).
-# Copy this file elsewhere if you prefer; pass it in with:
-#   ros2 launch genesis_icp offline_genesis_icp.launch.py offline_config:=/path/to/your.yaml
+# Overlay for genesis_icp_offline_node (node name: genesis_icp).
+# Loaded after config/genesis_icp.yaml by offline_genesis_icp.launch.py
 
-offline_genesis_icp:
-  # Required: rosbag2 directories or .db3 files (one bag per robot domain).
-  robot_a_bag: "/home/UNT/md0708/BagFiles/multirobot_bags/313131-JK3/JK3-31Mar1m20d"
-  robot_b_bag: "/home/UNT/md0708/BagFiles/multirobot_bags/313131/JK5-31Mar1m20d"
+genesis_icp:
+  ros__parameters:
+    # Required: rosbag2 directories (folders containing metadata.yaml + db3/mcap).
+    robot_a_bag: "/home/UNT/md0708/Desktop/JK3-GenesisHomeTest1"
+    robot_b_bag: "/home/UNT/md0708/Desktop/JK5-GenesisHomeTest1"
 
-  # Optional: override fusion parameter file (null = package share config/genesis_icp.yaml).
-  fusion_params_file: null
+    # Topics as recorded in each bag (leading slash optional).
+    robot_a_scan_topic: "/JK3/sensors/lidar2d_0/scan"
+    robot_b_scan_topic: "/JK5/sensors/lidar2d_0/scan"
+    robot_a_tf_topic: "/JK3/tf"
+    robot_b_tf_topic: "/JK5/tf"
+    robot_a_tf_static_topic: "/JK3/tf_static"
+    robot_b_tf_static_topic: "/JK5/tf_static"
 
-  # Merged into the genesis_icp node (flat ros__parameters-style keys for that node).
-  extra_fusion_parameters:
+    # TF frame IDs inside each bag (usually unprefixed odom/base_link per robot, matching socket relay).
+    odom_frame_robot_a: "odom"
+    base_frame_robot_a: "base_link"
+    odom_frame_robot_b: "odom"
+    base_frame_robot_b: "base_link"
+
+    # 0 = process as fast as possible; 1.0 = sleep to approximate recorded timeline.
+    playback_realtime_factor: 0.0
+    # 0 = no limit (full bags); set e.g. 5000 for a quick smoke test.
+    max_bag_messages: 0
+
+    # Prefer true for bags with meaningful wheel odometry in TF + packets.
     use_odom_poses_for_match: true
     multi_seed_match: false
-
-  use_sim_time: true
-  robot_a_ros_domain_id: 3
-  robot_b_ros_domain_id: 5
-  fusion_ros_domain_id: 0
-  robot_a_namespace: JK3
-  robot_b_namespace: JK5
-
-  scan_use_best_effort_qos: false
-  tf_static_use_transient_local: false
-  max_time_delta_sec: 10.0
-
-  bag_play:
-    clock: true
-    rate: 1.0
-    loop: false
-    # Seconds; forwarded to ros2 bag play when supported.
-    start_offset: 0.0
-    # Extra CLI tokens, e.g. ["--read-ahead-queue-size", "1000"]
-    additional_args: []

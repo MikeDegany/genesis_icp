@@ -32,6 +32,8 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(rosbag2_cpp REQUIRED)
+find_package(rosbag2_storage REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system serialization filesystem thread)
 find_package(TBB REQUIRED)
@@ -86,7 +88,15 @@ add_executable(genesis_icp_node src/genesis_icp_node.cpp)
 ament_target_dependencies(genesis_icp_node ${DEPS})
 target_link_libraries(genesis_icp_node genesis_icp_scan_fusion genesis_icp_common)
 
-install(TARGETS genesis_icp_socket_relay genesis_icp_node
+add_executable(genesis_icp_offline_node src/genesis_icp_offline_node.cpp)
+ament_target_dependencies(genesis_icp_offline_node
+  ${DEPS}
+  rosbag2_cpp
+  rosbag2_storage
+)
+target_link_libraries(genesis_icp_offline_node genesis_icp_scan_fusion genesis_icp_common)
+
+install(TARGETS genesis_icp_socket_relay genesis_icp_node genesis_icp_offline_node
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY include/
