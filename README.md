@@ -91,22 +91,31 @@ Tune **`genesis_icp.yaml`** for scan topics, frame names, **`use_odom_poses_for_
 
 ## Offline replay (rosbag2)
 
-1. Edit **`config/offline_genesis_icp.yaml`**: set **`robot_a_bag`** and **`robot_b_bag`** to your rosbag paths (absolute or relative to that YAML file).
-2. Prefer **`use_odom_poses_for_match: true`** in **`extra_fusion_parameters`** for bag data with meaningful odometry.
+The **`genesis_icp_offline_node`** executable reads **two rosbag2 folders** directly (via **rosbag2_cpp**). It does **not** use socket relays, **`ros2 bag play`**, or multiple **`ROS_DOMAIN_ID`** values. TF and scans are replayed in timestamp order into the same Karto scan-matching core as the live **`genesis_icp_node`**.
+
+1. Edit **`config/offline_genesis_icp.yaml`**: set **`robot_a_bag`** / **`robot_b_bag`** to your bag directories, and align **`robot_*_scan_topic`** / **`robot_*_tf*`** with the names stored in each recording. Set **`odom_frame_robot_*`** / **`base_frame_robot_*`** to the frame IDs **inside the bag** (often `odom` / `base_link` per robot, same as the socket relay—not necessarily `JK3/odom` from the live fusion YAML).
+2. Tune Karto / frames in **`config/genesis_icp.yaml`** (or pass **`fusion_config:=`**). Prefer **`use_odom_poses_for_match: true`** in the offline overlay when bags include meaningful odom-linked TF.
 3. Launch:
 
 ```bash
 ros2 launch genesis_icp offline_genesis_icp.launch.py
 ```
 
-Override the config path:
+Optional launch arguments:
+
+| Argument | Role |
+|----------|------|
+| `fusion_config` | Defaults to package **`config/genesis_icp.yaml`** |
+| `offline_config` | Defaults to package **`config/offline_genesis_icp.yaml`** |
+
+Example custom overlay only:
 
 ```bash
 ros2 launch genesis_icp offline_genesis_icp.launch.py \
   offline_config:=/absolute/path/to/my_offline.yaml
 ```
 
-This starts two **`ros2 bag play`** processes (with **`--clock`** by default), both relays, and the fusion node. Ensure bag QoS matches relay settings (defaults favor rosbag2: reliable scans, volatile **`tf_static`** handling as documented in the live launch file).
+**`playback_realtime_factor`**: `0` processes messages as fast as possible; `1.0` approximates wall-clock spacing between bag timestamps. **`max_bag_messages`** (non-zero) stops after *N* messages for quick tests.
 
 ---
 
@@ -131,9 +140,9 @@ For a permanent local setup, use a **`*.local.sh`** file (ignored by `.gitignore
 
 | Area | File / node |
 |------|-------------|
-| Fusion + Karto | `config/genesis_icp.yaml` → `genesis_icp` node |
-| Offline bags + domains | `config/offline_genesis_icp.yaml` |
-| Relay TCP ports / scan topic | Launch Python + relay node params |
+| Fusion + Karto | `config/genesis_icp.yaml` → `genesis_icp` / `genesis_icp_offline_node` |
+| Offline bag paths + per-bag topics | `config/offline_genesis_icp.yaml` |
+| Relay TCP ports / scan topic | `genesis_icp_with_relays.launch.py` + relay node params |
 
 ---
 
