@@ -59,6 +59,14 @@ genesis_icp:
     tf_static_topic_robot_b: "/JK5/tf_static"
     anchor_mode: "robot_a"
 
+    # Wait for N consecutive matches above minimum_match_response before the first tf_static publish
+    # (reliable + transient_local on fusion domain; bridge can copy to robot domains). After the first
+    # publish, each good match republishes (like updating a static_transform_publisher). Set to 1 to
+    # publish as soon as one match passes the threshold.
+    tf_static_min_consecutive_matches: 3
+    # If true, publish tf_static only once after the consecutive gate, then stop updating.
+    tf_static_publish_only_once: false
+
     # Bags / multi-robot often have seconds of header stamp skew; pairing uses a buffer and min |t_a-t_b|.
     max_time_delta_sec: 10.0
     scan_pair_buffer_size: 80

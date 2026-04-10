@@ -105,6 +105,11 @@ private:
   std::string laser_id_robot_b_;
   double tf_buffer_cache_sec_{60.0};
 
+  int tf_static_min_consecutive_matches_{1};
+  bool tf_static_publish_only_once_{false};
+  int consecutive_good_matches_{0};
+  bool have_published_tf_static_once_{false};
+
   std::unique_ptr<karto::Mapper> mapper_;
   bool mapper_params_applied_{false};
   bool mapper_initialized_{false};

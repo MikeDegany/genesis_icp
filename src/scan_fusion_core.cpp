@@ -178,6 +178,20 @@ void smooth_tf2_transform(
   acc.setRotation(q);
 }
 
+bool transform_msg_finite(const geometry_msgs::msg::Transform & tr)
+{
+  const auto & t = tr.translation;
+  const auto & r = tr.rotation;
+  if (!std::isfinite(t.x) || !std::isfinite(t.y) || !std::isfinite(t.z)) {
+    return false;
+  }
+  if (!std::isfinite(r.x) || !std::isfinite(r.y) || !std::isfinite(r.z) || !std::isfinite(r.w)) {
+    return false;
+  }
+  const double n2 = r.x * r.x + r.y * r.y + r.z * r.z + r.w * r.w;
+  return std::isfinite(n2) && n2 > 1e-12;
+}
+
 }  // namespace
 
 void declare_scan_fusion_parameters(rclcpp::Node & node)
@@ -207,6 +221,9 @@ void declare_scan_fusion_parameters(rclcpp::Node & node)
 
   node.declare_parameter<std::string>("laser_id_robot_a", "genesis_robot_a_laser");
   node.declare_parameter<std::string>("laser_id_robot_b", "genesis_robot_b_laser");
+
+  node.declare_parameter<int>("tf_static_min_consecutive_matches", 3);
+  node.declare_parameter<bool>("tf_static_publish_only_once", false);
   // tf_buffer_cache_sec: declared by genesis_icp_node / genesis_icp_offline_node (not here) to avoid
   // duplicate declare with the node's subscription-path TF buffer.
 }
@@ -278,6 +295,13 @@ ScanFusionCore::ScanFusionCore(
 
   laser_id_robot_a_ = node_->get_parameter("laser_id_robot_a").as_string();
   laser_id_robot_b_ = node_->get_parameter("laser_id_robot_b").as_string();
+
+  tf_static_min_consecutive_matches_ = node_->get_parameter("tf_static_min_consecutive_matches").as_int();
+  if (tf_static_min_consecutive_matches_ < 1) {
+    tf_static_min_consecutive_matches_ = 1;
+  }
+  tf_static_publish_only_once_ = node_->get_parameter("tf_static_publish_only_once").as_bool();
+
   if (node_->has_parameter("tf_buffer_cache_sec")) {
     tf_buffer_cache_sec_ = node_->get_parameter("tf_buffer_cache_sec").as_double();
   } else {
@@ -410,9 +434,32 @@ bool ScanFusionCore::process_pair(const ScanPacket & a, const ScanPacket & b)
       node_->get_logger(), *node_->get_clock(), 3000,
       "Scan match response %.4f below threshold %.4f", static_cast<double>(response),
       minimum_match_response_);
+    if (!have_published_tf_static_once_) {
+      consecutive_good_matches_ = 0;
+    }
     delete ra;
     delete rb;
     return false;
+  }
+
+  if (!have_published_tf_static_once_) {
+    ++consecutive_good_matches_;
+    if (consecutive_good_matches_ < tf_static_min_consecutive_matches_) {
+      RCLCPP_INFO_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 2000,
+        "Match above threshold (response=%.4f), solidifying %d / %d consecutive matches before "
+        "publishing tf_static",
+        static_cast<double>(response), consecutive_good_matches_, tf_static_min_consecutive_matches_);
+      delete ra;
+      delete rb;
+      return true;
+    }
+  }
+
+  if (tf_static_publish_only_once_ && have_published_tf_static_once_) {
+    delete ra;
+    delete rb;
+    return true;
   }
 
   const tf2::Transform T_sensor_B_in_A = kartoPoseToTf(best_mean);
@@ -456,6 +503,7 @@ bool ScanFusionCore::process_pair(const ScanPacket & a, const ScanPacket & b)
   }
 
   publish_static_transforms(T_publish);
+  have_published_tf_static_once_ = true;
 
   delete ra;
   delete rb;
@@ -500,6 +548,13 @@ void ScanFusionCore::publish_static_transforms(const tf2::Transform & T_odomA_od
   tb.header.frame_id = global_odom_frame_;
   tb.child_frame_id = odom_child_robot_b_;
   tf2::toMsg(T_global_odomB, tb.transform);
+
+  if (!transform_msg_finite(ta.transform) || !transform_msg_finite(tb.transform)) {
+    RCLCPP_WARN_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 2000,
+      "Skipping fusion tf_static publish: non-finite transform (check match / smoothing)");
+    return;
+  }
 
   tf2_msgs::msg::TFMessage msg_a;
   msg_a.transforms.push_back(ta);
