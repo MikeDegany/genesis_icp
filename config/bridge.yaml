@@ -1,0 +1,44 @@
+# Copyright (c) 2026 Mike Degany <mike.degany@gmail.com>
+#
+# MIT License: see permission/disclaimer text in MIT-licensed files in this package.
+#
+# Bridge genesis_icp fusion static TF from the fusion ROS_DOMAIN_ID onto each robot domain.
+#
+# Default remap (JK3/tf_static_fusion, JK5/tf_static_fusion): fusion publishes
+# global_odom -> JK3/odom (and JK5/odom). Putting that on the same topic as
+# robot_state_publisher (/JK3/tf_static) merges it into the relay's TF buffer and can
+# conflict with localization (e.g. map -> JK3/odom), which then surfaces as TF_NAN_INPUT /
+# invalid quaternion errors. Use separate topics unless you know your graph has no
+# duplicate parent for those odom frames.
+#
+# To bridge onto the same names as fusion (mix with URDF on /JK3/tf_static), delete the
+# remap lines below for each topic.
+#
+# Edit topic keys, remap names, and to_domain if genesis_icp.yaml namespaces or domain IDs differ.
+#
+# Run manually:
+#   ros2 run domain_bridge domain_bridge /path/to/this/file.yaml
+#
+# Or enable bridge_tf_static:=true on genesis_icp_with_relays.launch.py / offline launch.
+
+name: genesis_icp_tf_static
+from_domain: 0
+topics:
+  JK3/tf_static:
+    type: tf2_msgs/msg/TFMessage
+    to_domain: 3
+    remap: JK3/tf_static_fusion
+    qos:
+      reliability: reliable
+      durability: transient_local
+      history: keep_last
+      depth: 10
+  JK5/tf_static:
+    type: tf2_msgs/msg/TFMessage
+    to_domain: 5
+    remap: JK5/tf_static_fusion
+    qos:
+      reliability: reliable
+      durability: transient_local
+      history: keep_last
+      depth: 10

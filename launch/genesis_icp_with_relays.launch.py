@@ -21,7 +21,8 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, SetEnvironmentVariable
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, PushRosNamespace
 from launch_ros.parameter_descriptions import ParameterValue
@@ -92,6 +93,28 @@ def generate_launch_description():
         'robot_b_namespace',
         default_value='JK5',
         description='ROS namespace for robot B relay')
+
+    pkg_share = get_package_share_directory('genesis_icp')
+    default_bridge_cfg = os.path.join(pkg_share, 'config', 'bridge.yaml')
+    bridge_merge_cfg = os.path.join(pkg_share, 'config', 'bridge_robot_tf_static.yaml')
+    declare_bridge_tf_static = DeclareLaunchArgument(
+        'bridge_tf_static',
+        default_value='false',
+        description='If true, run domain_bridge to copy fusion tf_static from fusion_ros_domain_id '
+        'to robot domains (see config/bridge.yaml or bridge_robot_tf_static.yaml).',
+    )
+    declare_bridge_merge = DeclareLaunchArgument(
+        'bridge_merge_fusion_into_robot_tf_static',
+        default_value='false',
+        description='If true (with bridge_tf_static), use bridge_robot_tf_static.yaml: publish onto '
+        '/JK3/tf_static and /JK5/tf_static like tf2_ros static_transform_publisher. Risky if '
+        'localization also parents JK3/odom (TF conflicts / NaN); default false uses *_tf_static_fusion.',
+    )
+    declare_bridge_config = DeclareLaunchArgument(
+        'domain_bridge_config',
+        default_value=default_bridge_cfg,
+        description='YAML when bridge_merge_fusion_into_robot_tf_static is false (override path if needed)',
+    )
 
     relay_a_params = {
         'tcp_host': '127.0.0.1',
@@ -171,6 +194,42 @@ def generate_launch_description():
         ),
     ])
 
+    tf_static_domain_bridge_default = ExecuteProcess(
+        cmd=[
+            'ros2',
+            'run',
+            'domain_bridge',
+            'domain_bridge',
+            LaunchConfiguration('domain_bridge_config'),
+        ],
+        output='screen',
+        shell=False,
+    )
+    tf_static_domain_bridge_merge = ExecuteProcess(
+        cmd=[
+            'ros2',
+            'run',
+            'domain_bridge',
+            'domain_bridge',
+            bridge_merge_cfg,
+        ],
+        output='screen',
+        shell=False,
+    )
+    tf_static_domain_bridge = GroupAction(
+        condition=IfCondition(LaunchConfiguration('bridge_tf_static')),
+        actions=[
+            GroupAction(
+                condition=UnlessCondition(LaunchConfiguration('bridge_merge_fusion_into_robot_tf_static')),
+                actions=[tf_static_domain_bridge_default],
+            ),
+            GroupAction(
+                condition=IfCondition(LaunchConfiguration('bridge_merge_fusion_into_robot_tf_static')),
+                actions=[tf_static_domain_bridge_merge],
+            ),
+        ],
+    )
+
     return LaunchDescription([
         declare_use_sim,
         declare_max_dt,
@@ -182,7 +241,11 @@ def generate_launch_description():
         declare_db,
         declare_ns_a,
         declare_ns_b,
+        declare_bridge_tf_static,
+        declare_bridge_merge,
+        declare_bridge_config,
         relay_a,
         relay_b,
         fusion,
+        tf_static_domain_bridge,
     ])

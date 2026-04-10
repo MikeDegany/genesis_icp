@@ -23,7 +23,8 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, ExecuteProcess
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
@@ -33,6 +34,7 @@ def generate_launch_description():
     pkg = get_package_share_directory('genesis_icp')
     default_fusion = os.path.join(pkg, 'config', 'genesis_icp.yaml')
     default_offline = os.path.join(pkg, 'config', 'offline_genesis_icp.yaml')
+    default_bridge_cfg = os.path.join(pkg, 'config', 'bridge.yaml')
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -45,6 +47,16 @@ def generate_launch_description():
             default_value=default_offline,
             description='Bag paths, per-robot topics, and offline-only options',
         ),
+        DeclareLaunchArgument(
+            'bridge_tf_static',
+            default_value='false',
+            description='If true, run domain_bridge (config/bridge.yaml; default remap *_tf_static_fusion)',
+        ),
+        DeclareLaunchArgument(
+            'domain_bridge_config',
+            default_value=default_bridge_cfg,
+            description='YAML for ros2 run domain_bridge domain_bridge',
+        ),
         Node(
             package='genesis_icp',
             executable='genesis_icp_offline_node',
@@ -54,5 +66,17 @@ def generate_launch_description():
                 LaunchConfiguration('fusion_config'),
                 LaunchConfiguration('offline_config'),
             ],
+        ),
+        ExecuteProcess(
+            condition=IfCondition(LaunchConfiguration('bridge_tf_static')),
+            cmd=[
+                'ros2',
+                'run',
+                'domain_bridge',
+                'domain_bridge',
+                LaunchConfiguration('domain_bridge_config'),
+            ],
+            output='screen',
+            shell=False,
         ),
     ])

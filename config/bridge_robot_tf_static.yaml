@@ -1,0 +1,28 @@
+# Copyright (c) 2026 Mike Degany <mike.degany@gmail.com>
+#
+# MIT License: see permission/disclaimer text in MIT-licensed files in this package.
+#
+# Same as bridge.yaml but republishes onto /JK3/tf_static and /JK5/tf_static on each robot
+# domain (no remap). Use with launch arg bridge_merge_fusion_into_robot_tf_static:=true only if
+# your TF graph has a single parent for each odom child (no competing map->JK3/odom vs
+# global_odom->JK3/odom), or you will see TF_NAN_INPUT / invalid quaternion errors.
+
+name: genesis_icp_tf_static_merged
+from_domain: 0
+topics:
+  JK3/tf_static:
+    type: tf2_msgs/msg/TFMessage
+    to_domain: 3
+    qos:
+      reliability: reliable
+      durability: transient_local
+      history: keep_last
+      depth: 10
+  JK5/tf_static:
+    type: tf2_msgs/msg/TFMessage
+    to_domain: 5
+    qos:
+      reliability: reliable
+      durability: transient_local
+      history: keep_last
+      depth: 10
